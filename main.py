@@ -31,23 +31,26 @@ class Net(nn.Module):
         # Convolutional Layers
         # Batch Norm for Conv Layers
         # in_channels, out_channels, kernel_size
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.conv2_bn = nn.BatchNorm2d(16)
-        self.conv3 = nn.Conv2d(16, 36, 5)
-        self.conv3_bn = nn.BatchNorm2d(36)
+        self.conv1 = nn.Conv2d(3, 48, 3, padding=1)
+        self.conv2 = nn.Conv2d(48, 96, 3, padding=1)
+        self.conv3 = nn.Conv2d(96, 192, 3, padding=1)
+        self.conv2_bn = nn.BatchNorm2d(48)
+        self.conv3_bn = nn.BatchNorm2d(96)
 
         # Pooling
         # kernel size
         self.pool1 = nn.MaxPool2d(2, 2)
+        self.pool2 = nn.AvgPool2d(2, 2)
+
+        # Dropout
+        self.dropout = nn.Dropout(p=0.2)
 
         # Linear Layers
         # Batch Norm for Linear Layer
         # in_features, out_features
-        self.fc1 = nn.Linear(36 * 3 * 3, 120)
-        self.dense1_bn = nn.BatchNorm1d(120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 64)
+        self.fc1 = nn.Linear(192 * 8 * 8, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, 64)
         # Output layer -> # of classes = 10
         self.fc4 = nn.Linear(64, 10)
 
@@ -58,21 +61,30 @@ class Net(nn.Module):
     # Using relu seem to give better results
 
     def forward(self, x):
-        x = self.pool1(F.relu(self.conv1(x)))      # Shape: torch.Size([4, 6, 14, 14])
-        x = F.relu(self.conv2(x))                  # Shape: torch.Size([4, 16, 10, 10])
-        x = self.pool1(F.relu(self.conv3(x)))      # Shape: torch.Size([4, 36, 3, 3])
+        x = F.relu(self.conv1(x))                    # Shape: torch.Size([4, 6, 14, 14])
+        x = self.pool1(F.relu(self.conv2(x)))    # Shape: torch.Size([4, 16, 10, 10])
+        x = self.dropout(x)
+        x = self.pool1(F.relu(self.conv3(x)))        # Shape: torch.Size([4, 192, 8, 8])
+        x = self.dropout(x)
 
         # Match the input dimensions with linear layer:
-        x = x.view(-1, 36 * 3 * 3)
+        x = x.view(-1, 192 * 8 * 8)
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
+        x = self.dropout(x)
         x = self.fc4(x)
         return x
 
 
 def main():
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # Assuming that we are on a CUDA machine, this should print a CUDA device:
+
+    print(device)
 
     # 1. Load and normalizing the CIFAR10 training and test datasets using torchvision
     # 2. Define a Convolutional Neural Network
@@ -82,8 +94,9 @@ def main():
 
     # 1. Define Transformations:
     # **RandomHorizontalFLip increased test accuracy by %1**
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.RandomHorizontalFlip(),
+    transform = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                    transforms.RandomCrop(32, padding=4),
+                                    transforms.ToTensor(),
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # 2. Load the Dataset and Loaders (CIFAR10)
@@ -97,6 +110,9 @@ def main():
 
     # 3. Define the network
     net = Net()
+
+    # If CUDA available
+    net.to(device)
 
     # Define loss function
     # Option 1: Cross Entropy Loss
@@ -112,7 +128,7 @@ def main():
 
     # Training Loop:
     # Number of epochs: 5
-    for epoch in range(7):  # loop over the dataset multiple times
+    for epoch in range(8):  # loop over the dataset multiple times
 
         running_loss = 0.0
 
@@ -120,6 +136,9 @@ def main():
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
+            
+            # If CUDA available
+            inputs, labels = data[0].to(device), data[1].to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
