@@ -101,10 +101,10 @@ def main():
 
     # 2. Load the Dataset and Loaders (CIFAR10)
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=2)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=16, shuffle=True, num_workers=2)
 
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=2)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -130,13 +130,15 @@ def main():
     # Training Loop:
     # Number of epochs: 5
     lr = 0.001
-    epochs = 20
+    epochs = 40
     for epoch in range(epochs):  # loop over the dataset multiple times
 
         if epoch <= 10:
             optimizer = optim.Adam(net.parameters(), lr=lr)
         elif epoch > 10 and epoch <= 25:
             optimizer = optim.Adam(net.parameters(), lr=lr/10)
+        elif epoch > 10 and epoch <= 50:
+            optimizer = optim.Adam(net.parameters(), lr=lr/50)
 
         running_loss = 0.0
 
@@ -169,7 +171,7 @@ def main():
     print('Finished Training')
 
     # Saving the trained model:
-    PATH = './cifar_net4.pth'
+    PATH = './cifar_net5.pth'
     torch.save(net.state_dict(), PATH)
 
     # Test on test data:
