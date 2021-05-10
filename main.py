@@ -72,8 +72,8 @@ class Net(nn.Module):
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.dropout(x)
         x = F.relu(self.fc3(x))
+        x = self.dropout(x)
         x = self.fc4(x)
         return x
 
@@ -97,7 +97,7 @@ def main():
     transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                     transforms.RandomCrop(32, padding=4),
                                     transforms.ToTensor(),
-                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+                                    transforms.Normalize((0.5, 0.5, 0.5), (0.2, 0.2, 0.2))])
 
     # 2. Load the Dataset and Loaders (CIFAR10)
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
@@ -124,11 +124,19 @@ def main():
     # Does not change accuracy
 
     #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-    optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+
+    #optimizer = optim.Adam(net.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
 
     # Training Loop:
     # Number of epochs: 5
-    for epoch in range(14):  # loop over the dataset multiple times
+    lr = 0.001
+    epochs = 20
+    for epoch in range(epochs):  # loop over the dataset multiple times
+
+        if epoch <= 10:
+            optimizer = optim.Adam(net.parameters(), lr=lr)
+        elif epoch > 10 and epoch <= 25:
+            optimizer = optim.Adam(net.parameters(), lr=lr/10)
 
         running_loss = 0.0
 
@@ -161,7 +169,7 @@ def main():
     print('Finished Training')
 
     # Saving the trained model:
-    PATH = './cifar_net3.pth'
+    PATH = './cifar_net4.pth'
     torch.save(net.state_dict(), PATH)
 
     # Test on test data:
