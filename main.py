@@ -43,7 +43,7 @@ class Net(nn.Module):
         self.pool2 = nn.AvgPool2d(2, 2)
 
         # Dropout
-        self.dropout = nn.Dropout(p=0.2)
+        self.dropout = nn.Dropout(p=0.25)
 
         # Linear Layers
         # Batch Norm for Linear Layer
@@ -72,8 +72,8 @@ class Net(nn.Module):
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
         x = self.dropout(x)
+        x = F.relu(self.fc3(x))
         x = self.fc4(x)
         return x
 
@@ -128,15 +128,16 @@ def main():
 
     # Training Loop:
     # Number of epochs: 5
-    for epoch in range(8):  # loop over the dataset multiple times
+    for epoch in range(14):  # loop over the dataset multiple times
 
         running_loss = 0.0
 
         # Loop over data
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
-            
+
+            #inputs, labels = data
+
             # If CUDA available
             inputs, labels = data[0].to(device), data[1].to(device)
 
@@ -160,7 +161,7 @@ def main():
     print('Finished Training')
 
     # Saving the trained model:
-    PATH = './cifar_net2.pth'
+    PATH = './cifar_net3.pth'
     torch.save(net.state_dict(), PATH)
 
     # Test on test data:
