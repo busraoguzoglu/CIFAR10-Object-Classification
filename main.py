@@ -34,8 +34,8 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.conv2_bn = nn.BatchNorm2d(16)
-        self.conv3 = nn.Conv2d(16, 24, 5)
-        self.conv3_bn = nn.BatchNorm2d(24)
+        self.conv3 = nn.Conv2d(16, 36, 5)
+        self.conv3_bn = nn.BatchNorm2d(36)
 
         # Pooling
         # kernel size
@@ -44,11 +44,12 @@ class Net(nn.Module):
         # Linear Layers
         # Batch Norm for Linear Layer
         # in_features, out_features
-        self.fc1 = nn.Linear(24 * 3 * 3, 120)
+        self.fc1 = nn.Linear(36 * 3 * 3, 120)
         self.dense1_bn = nn.BatchNorm1d(120)
         self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 64)
         # Output layer -> # of classes = 10
-        self.fc3 = nn.Linear(84, 10)
+        self.fc4 = nn.Linear(64, 10)
 
 
     # Define what to do on forward propagation
@@ -58,15 +59,16 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = self.pool1(F.relu(self.conv1(x)))      # Shape: torch.Size([4, 6, 14, 14])
-        x = F.relu(self.conv2_bn(self.conv2(x)))   # Shape: torch.Size([4, 16, 10, 10])
-        x = self.pool1(F.relu(self.conv3_bn(self.conv3(x))))      # Shape: torch.Size([4, 24, 3, 3])
+        x = F.relu(self.conv2(x))                  # Shape: torch.Size([4, 16, 10, 10])
+        x = self.pool1(F.relu(self.conv3(x)))      # Shape: torch.Size([4, 36, 3, 3])
 
         # Match the input dimensions with linear layer:
-        x = x.view(-1, 24 * 3 * 3)
+        x = x.view(-1, 36 * 3 * 3)
 
-        x = F.relu(self.dense1_bn(self.fc1(x)))
+        x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return x
 
 
@@ -105,12 +107,12 @@ def main():
     # Option 2: Adam
     # Does not change accuracy
 
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-    #optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+    #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
 
     # Training Loop:
     # Number of epochs: 5
-    for epoch in range(8):  # loop over the dataset multiple times
+    for epoch in range(7):  # loop over the dataset multiple times
 
         running_loss = 0.0
 
