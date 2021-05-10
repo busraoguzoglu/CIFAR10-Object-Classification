@@ -31,7 +31,8 @@ class Net(nn.Module):
         # Convolutional Layers
         # in_channels, out_channels, kernel_size
         self.conv1 = nn.Conv2d(3, 6, 5)
-        self.conv2 = nn.Conv2d(6, 20, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv3 = nn.Conv2d(16, 24, 5)
 
         # Pooling
         # kernel size
@@ -39,7 +40,7 @@ class Net(nn.Module):
 
         # Linear Layers
         # in_features, out_features
-        self.fc1 = nn.Linear(20 * 5 * 5, 120)
+        self.fc1 = nn.Linear(24 * 3 * 3, 120)
         self.fc2 = nn.Linear(120, 84)
         # Output layer -> # of classes = 10
         self.fc3 = nn.Linear(84, 10)
@@ -51,9 +52,13 @@ class Net(nn.Module):
     # Using relu seem to give better results
 
     def forward(self, x):
-        x = self.pool1(F.relu(self.conv1(x)))
-        x = self.pool1(F.relu(self.conv2(x)))
-        x = x.view(-1, 20 * 5 * 5)
+        x = self.pool1(F.relu(self.conv1(x))) # Shape: torch.Size([4, 6, 14, 14])
+        x = F.relu(self.conv2(x))             # Shape: torch.Size([4, 16, 10, 10])
+        x = self.pool1(F.relu(self.conv3(x))) # Shape: torch.Size([4, 24, 3, 3])
+
+        # Match the input dimensions with linear layer:
+        x = x.view(-1, 24 * 3 * 3)
+
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
