@@ -31,11 +31,11 @@ class Net(nn.Module):
         # Convolutional Layers
         # Batch Norm for Conv Layers
         # in_channels, out_channels, kernel_size
-        self.conv1 = nn.Conv2d(3, 48, 3, padding=1)
-        self.conv2 = nn.Conv2d(48, 96, 3, padding=1)
-        self.conv3 = nn.Conv2d(96, 192, 3, padding=1)
-        self.conv2_bn = nn.BatchNorm2d(48)
-        self.conv3_bn = nn.BatchNorm2d(96)
+        self.conv1 = nn.Conv2d(3, 64, 3, padding=1)
+        self.conv2 = nn.Conv2d(64, 128, 3, padding=1)
+        self.conv3 = nn.Conv2d(128, 256, 3, padding=1)
+        self.conv2_bn = nn.BatchNorm2d(64)
+        self.conv3_bn = nn.BatchNorm2d(128)
 
         # Pooling
         # kernel size
@@ -48,7 +48,7 @@ class Net(nn.Module):
         # Linear Layers
         # Batch Norm for Linear Layer
         # in_features, out_features
-        self.fc1 = nn.Linear(192 * 8 * 8, 512)
+        self.fc1 = nn.Linear(256 * 8 * 8, 512)
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, 64)
         # Output layer -> # of classes = 10
@@ -68,7 +68,7 @@ class Net(nn.Module):
         x = self.dropout(x)
 
         # Match the input dimensions with linear layer:
-        x = x.view(-1, 192 * 8 * 8)
+        x = x.view(-1, 256 * 8 * 8)
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -100,14 +100,12 @@ def train_model(net, trainloader, device):
     # Training Loop:
     # Number of epochs: 5
     lr = 0.001
-    epochs = 50
+    epochs = 40
     for epoch in range(epochs):  # loop over the dataset multiple times
 
-        if epoch <= 10:
+        if epoch <= 20:
             optimizer = optim.Adam(net.parameters(), lr=lr)
-        elif epoch > 10 and epoch <= 25:
-            optimizer = optim.Adam(net.parameters(), lr=lr / 10)
-        elif epoch > 25 and epoch <= 50:
+        elif epoch > 20 and epoch <= 40:
             optimizer = optim.Adam(net.parameters(), lr=lr / 50)
 
         running_loss = 0.0
@@ -183,11 +181,11 @@ def main():
     # Option 2: Adam
     # Does not change accuracy
 
-    net = train_model(net, trainloader, device)
+    #net = train_model(net, trainloader, device)
 
     # Saving the trained model:
-    PATH = './cifar_net6.pth'
-    torch.save(net.state_dict(), PATH)
+    #PATH = './cifar_net6.pth'
+    #torch.save(net.state_dict(), PATH)
 
     # Test on test data:
     dataiter = iter(testloader)
@@ -198,7 +196,7 @@ def main():
     print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
     # Working directly from the saved model:
-    PATH = './cifar_net5.pth'
+    PATH = './cifar_net6.pth'
     net = Net()
     net.load_state_dict(torch.load(PATH))
 
