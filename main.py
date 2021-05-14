@@ -77,6 +77,70 @@ class Net(nn.Module):
         x = self.fc4(x)
         return x
 
+def calculate_accuracy(net, dataloader):
+    # Get general accuracy:
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in dataloader:
+            images, labels = data
+            outputs = net(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    return 100 * correct / total
+
+
+def train_model(net, trainloader, device):
+    # Define loss function
+    # Option 1: Cross Entropy Loss
+    criterion = nn.CrossEntropyLoss()
+
+    # Training Loop:
+    # Number of epochs: 5
+    lr = 0.001
+    epochs = 50
+    for epoch in range(epochs):  # loop over the dataset multiple times
+
+        if epoch <= 10:
+            optimizer = optim.Adam(net.parameters(), lr=lr)
+        elif epoch > 10 and epoch <= 25:
+            optimizer = optim.Adam(net.parameters(), lr=lr / 10)
+        elif epoch > 25 and epoch <= 50:
+            optimizer = optim.Adam(net.parameters(), lr=lr / 50)
+
+        running_loss = 0.0
+
+        # Loop over data
+        for i, data in enumerate(trainloader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+
+            # If CUDA available
+            if torch.cuda.is_available():
+                inputs, labels = data[0].to(device), data[1].to(device)
+            else:
+                inputs, labels = data
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            # backward propagation and weight update
+            loss.backward()
+            optimizer.step()
+
+            # print statistics
+            running_loss += loss.item()
+            if i % 2000 == 1999:  # print every 2000 mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                      (epoch + 1, i + 1, running_loss / 2000))
+                running_loss = 0.0
+
+    print('Finished Training')
+    return net
 
 def main():
 
@@ -114,64 +178,15 @@ def main():
     # If CUDA available
     net.to(device)
 
-    # Define loss function
-    # Option 1: Cross Entropy Loss
-    criterion = nn.CrossEntropyLoss()
-
     # Define optimizer
     # Option 1: SGD with momentum
     # Option 2: Adam
     # Does not change accuracy
 
-    #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
-    #optimizer = optim.Adam(net.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
-
-    # Training Loop:
-    # Number of epochs: 5
-    lr = 0.001
-    epochs = 40
-    for epoch in range(epochs):  # loop over the dataset multiple times
-
-        if epoch <= 10:
-            optimizer = optim.Adam(net.parameters(), lr=lr)
-        elif epoch > 10 and epoch <= 25:
-            optimizer = optim.Adam(net.parameters(), lr=lr/10)
-        elif epoch > 10 and epoch <= 50:
-            optimizer = optim.Adam(net.parameters(), lr=lr/50)
-
-        running_loss = 0.0
-
-        # Loop over data
-        for i, data in enumerate(trainloader, 0):
-            # get the inputs; data is a list of [inputs, labels]
-
-            #inputs, labels = data
-
-            # If CUDA available
-            inputs, labels = data[0].to(device), data[1].to(device)
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = net(inputs)
-            loss = criterion(outputs, labels)
-            # backward propagation and weight update
-            loss.backward()
-            optimizer.step()
-
-            # print statistics
-            running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
-
-    print('Finished Training')
+    net = train_model(net, trainloader, device)
 
     # Saving the trained model:
-    PATH = './cifar_net5.pth'
+    PATH = './cifar_net6.pth'
     torch.save(net.state_dict(), PATH)
 
     # Test on test data:
@@ -183,6 +198,7 @@ def main():
     print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
     # Working directly from the saved model:
+    PATH = './cifar_net5.pth'
     net = Net()
     net.load_state_dict(torch.load(PATH))
 
@@ -193,19 +209,13 @@ def main():
     print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
                                   for j in range(4)))
 
-    # Get general accuracy:
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            outputs = net(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+    train_accuracy = calculate_accuracy(net, trainloader)
+    print('Final accuracy of the network on the train images: %d %%' % (
+            train_accuracy))
 
+    test_accuracy = calculate_accuracy(net, testloader)
     print('Accuracy of the network on the 10000 test images: %d %%' % (
-            100 * correct / total))
+            test_accuracy))
 
 if __name__ == '__main__':
     main()
