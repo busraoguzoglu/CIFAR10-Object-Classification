@@ -8,8 +8,8 @@ Restriction: Using 3 Convolutional Layers
 
 With best model settings:
 
-Achieved Max accuracy of the network on the train images: 92%
+Achieved Max accuracy of the network on the train images: 94%
 
-Achieved Max Test Accuracy: 85% (cifar_net8.pth)
+Achieved Max Test Accuracy: 87% (cifar_net8.pth)
 
 Training takes around 135 minutes for 80 epochs using GPU.
