@@ -33,8 +33,7 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(3, 64, 3, padding=1)
         self.conv2 = nn.Conv2d(64, 128, 3, padding=1)
         self.conv3 = nn.Conv2d(128, 256, 3, padding=1)
-        self.conv2_bn = nn.BatchNorm2d(64)
-        self.conv3_bn = nn.BatchNorm2d(128)
+        self.conv2_bn = nn.BatchNorm2d(128)
 
         # Pooling
         # kernel size
@@ -48,6 +47,7 @@ class Net(nn.Module):
         # in_features, out_features
         self.fc1 = nn.Linear(256 * 8 * 8, 512)
         self.fc2 = nn.Linear(512, 256)
+        self.dense2_bn = nn.BatchNorm1d(256)
         self.fc3 = nn.Linear(256, 64)
         # Output layer -> # of classes = 10
         self.fc4 = nn.Linear(64, 10)
@@ -60,21 +60,23 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.conv1(x))                    # Shape: torch.Size([4, 6, 14, 14])
-        x = self.pool1(F.relu(self.conv2(x)))        # Shape: torch.Size([4, 16, 10, 10])
-        x = self.pool1(F.relu(self.conv3(x)))        # Shape: torch.Size([4, 192, 8, 8])
+        x = self.pool1(self.conv2_bn(self.conv2(x)))       # Shape: torch.Size([4, 16, 10, 10])
+        x = F.relu(x)
+        x = self.pool1(self.conv3(x))        # Shape: torch.Size([4, 192, 8, 8])
+        x = F.relu(x)
         x = self.dropout(x)
 
         # Match the input dimensions with linear layer:
         x = x.view(-1, 256 * 8 * 8)
 
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = F.relu(self.dense2_bn(self.fc2(x)))
         x = F.relu(self.fc3(x))
-        x = self.dropout(x)
         x = self.fc4(x)
         return x
 
 def calculate_accuracy(net, dataloader):
+    net.eval()
     # Get general accuracy:
     correct = 0
     total = 0
@@ -90,6 +92,7 @@ def calculate_accuracy(net, dataloader):
 
 
 def train_model(net, trainloader, device):
+    net.train()
     # Define loss function
     # Option 1: Cross Entropy Loss
     criterion = nn.CrossEntropyLoss()
@@ -183,11 +186,11 @@ def main():
     # Option 2: Adam
     # Does not change accuracy
 
-    net = train_model(net, trainloader, device)
+    #net = train_model(net, trainloader, device)
 
     # Saving the trained model:
-    PATH = './cifar_net4.pth'
-    torch.save(net.state_dict(), PATH)
+    #PATH = './cifar_net8.pth'
+    #torch.save(net.state_dict(), PATH)
 
     # Test on test data:
     dataiter = iter(testloader)
@@ -198,7 +201,7 @@ def main():
     print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
     # Working directly from the saved model:
-    PATH = './cifar_net4.pth'
+    PATH = './cifar_net8.pth'
     net = Net()
     net.load_state_dict(torch.load(PATH))
 
