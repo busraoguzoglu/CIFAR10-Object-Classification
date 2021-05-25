@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.manifold import TSNE
 
-from best_main import Net
+from model import Net
 
 # To solve Intel related matplotlib/torch error.
 import os
@@ -72,9 +72,6 @@ def main():
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=16, shuffle=True, num_workers=2)
 
-
-    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
     # 3. Define the network
     net = Net()
 
@@ -83,7 +80,7 @@ def main():
     net.to(device)
 
     # Working directly from the saved model:
-    PATH = './cifar_net8.pth'
+    PATH = './cifar_net_test.pth'
     net = Net()
     net.load_state_dict(torch.load(PATH))
 
@@ -92,6 +89,8 @@ def main():
 
     outputs = net.get_features(images)
     tsne_visualization(outputs, labels)
+
+    print('Train and test accuracy will be calculated')
 
     train_accuracy = calculate_accuracy(net, trainloader)
     print('Final accuracy of the network on the train images: %d %%' % (

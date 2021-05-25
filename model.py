@@ -59,6 +59,18 @@ class Net(nn.Module):
         x = self.fc4(x)
         return x
 
+    def get_features(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool1(self.conv2_bn(self.conv2(x)))
+        x = F.relu(x)
+        x = self.pool1(self.conv3(x))
+        x = F.relu(x)
+        x = self.dropout(x)
+
+        # Match the input dimensions with linear layer:
+        x = x.view(-1, 128 * 8 * 8)
+        x = F.relu(self.fc1(x))
+        return x
 
 def train_model(net, trainloader, device):
 
