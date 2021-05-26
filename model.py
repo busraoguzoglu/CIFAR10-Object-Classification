@@ -76,13 +76,13 @@ def train_model(net, trainloader, device):
 
     criterion = nn.CrossEntropyLoss()
     lr = 0.001
-    epochs = 40
+    epochs = 60
     all_loss = []
 
     # Training Loop:
     for epoch in range(epochs):  # loop over the dataset multiple times
 
-        if epoch <= 20:
+        if epoch <= 30:
             optimizer = optim.Adam(net.parameters(), lr=lr)
         elif epoch > 30 and epoch <= 80:
             optimizer = optim.Adam(net.parameters(), lr=lr / 50)
